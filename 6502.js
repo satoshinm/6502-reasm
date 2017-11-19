@@ -53,6 +53,12 @@ const addrmodes = [
   rel,izy,imp,izy,zpx,zpx,zpx,zpx,imp,aby,imp,aby,abx,abx,abx,abx, // Fx
 ];
 
+function hexByte(n) {
+  if (n === undefined) return 'xx';
+  if (n < 0x10) return '0' + n.toString(16);
+  return n.toString(16);
+}
+
 function dis1(buf) {
   const opcode = buf[0];
   const mneumonic = mneumonics[opcode];
@@ -60,20 +66,17 @@ function dis1(buf) {
 
   let operand;
   let size = 0;
-
-  function toHex(n) {
-    if (n === undefined) return 'xx';
-    if (n < 0x10) return '0' + n.toString(16);
-    return n.toString(16);
-  }
+  let bytes = [opcode];
 
   function readByte() {
     size = 1;
-    return '$' + toHex(buf[1]);
+    bytes[1] = buf[1];
+    return '$' + hexByte(buf[1]);
   }
 
   function readSignedByte() {
     size = 1;
+    bytes[1] = buf[1];
     if (buf[1] > 0x7f) {
       return '-' + -(buf[1] - 0x100);
     } else {
@@ -83,12 +86,14 @@ function dis1(buf) {
  
   function readWord() {
     size = 2;
-    return '$' + toHex(buf[1]) + toHex(buf[2]);
+    bytes[1] = buf[1];
+    bytes[2] = buf[2];
+    return '$' + hexByte(buf[2]) + hexByte(buf[1]);
   }
 
   switch (addrmode) {
     case imp: operand = ''; break;
-    case imm: operand = '#' + readWord(); break;
+    case imm: operand = '#' + readByte(); break;
     case zp: operand = readByte(); break;
     case zpx: operand = readByte() + ',X'; break;
     case zpy: operand = readByte() + ',Y'; break;
@@ -103,21 +108,51 @@ function dis1(buf) {
   }
 
   const bytesRead = 1 + size;
-  const instruction  = mneumonic + (operand.length !== 0 ? ' ' + operand : '');
+  const assembly = mneumonic + (operand.length !== 0 ? ' ' + operand : '');
 
-  return { bytesRead, instruction };
+  return { bytesRead, assembly, bytes };
 }
 
-function dis(buf) {
-  let pc = 0;
+function dis(buf, pc=0) {
+  const lines = [];
 
   while (pc < buf.length) {
-    const { bytesRead, instruction } = dis1(buf.slice(pc));
-    
-    console.log(instruction);
+    const { bytesRead, assembly, bytes } = dis1(buf.slice(pc));
+
+    lines.push({
+      address: pc,
+      assembly: assembly,
+      bytes: bytes,
+    });
 
     pc += bytesRead;
   }
+
+  return lines;
 }
 
-module.exports = { dis };
+function hexAddress(n) {
+  const s = n.toString(16);
+  return '00000000'.substring(0, 8 - s.length) + s;
+}
+
+function formatDis(lines) {
+  let text = '';
+
+  lines.forEach((line) => {
+    let s = hexAddress(line.address) + '    ';
+    for (let i = 0; i < 3; ++i) {
+      if (i >= line.bytes.length) s += '  ';
+      else s += hexByte(line.bytes[i]);
+      
+      s += ' ';
+    }
+    s += '    ' + line.assembly;
+
+    text += s + '\n';
+  });
+
+  return text;
+}
+
+module.exports = { dis, formatDis };
