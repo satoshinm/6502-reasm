@@ -16,7 +16,7 @@ const mneumonics = [
   'BCS','LDA','KIL','LAX','LDY','LDA','LDX','LAX','CLV','LDA','TSX','LAS','LDY','LDA','LDX','LAX', // Bx
   'CPY','CMP','NOP','DCP','CPY','CMP','DEC','DCP','INY','CMP','DEX','AXS','CPY','CMP','DEC','DCP', // Cx
   'BNE','CMP','KIL','DCP','NOP','CMP','DEC','DCP','CLD','CMP','NOP','DCP','NOP','CMP','DEC','DCP', // Dx
-  'CPX','SBC','NOP','ISC','CPX','SBC','INC','ISC','INX','SBC','NOP','SBC','CPX','SBC','INC','ISC', // Ex
+  'CPX','SBC','NOP','ISC','CPX','SBC','INC','ISC','INX','SBC','NOP','SBX','CPX','SBC','INC','ISC', // Ex
   'BEQ','SBC','KIL','ISC','NOP','SBC','INC','ISC','SED','SBC','NOP','ISC','NOP','SBC','INC','ISC', // Fx
 ];
 
