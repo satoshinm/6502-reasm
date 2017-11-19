@@ -13,7 +13,7 @@ patch it, and reassembling with the changes.  See also: [nes-game-genie](https:/
 Example:
 
 ```js
-    const {disasm, formatDisasm, reasm } = require('6502-reasm');
+    const {disasm, formatDisasm, reasm} = require('6502-reasm');
 
     // returns an array, one element per instruction
     const lines = disasm([0x78, 0xd8, 0xa9, 0x10, 0x8d, 0x00, 0x20, 0xa2, 0xff, 0x9a, 0xad, 0x02, 0x20, 0x10, 0xfb, 0xad]);
