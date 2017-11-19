@@ -16,9 +16,37 @@ const mneumonics = [
   'BCS','LDA','KIL','LAX','LDY','LDA','LDX','LAX','CLV','LDA','TSX','LAS','LDY','LDA','LDX','LAX', // Bx
   'CPY','CMP','NOP','DCP','CPY','CMP','DEC','DCP','INY','CMP','DEX','AXS','CPY','CMP','DEC','DCP', // Cx
   'BNE','CMP','KIL','DCP','NOP','CMP','DEC','DCP','CLD','CMP','NOP','DCP','NOP','CMP','DEC','DCP', // Dx
-  'CPX','SBC','NOP','ISC','CPX','SBC','INC','ISC','INX','SBC','NOP','SBX','CPX','SBC','INC','ISC', // Ex
+  'CPX','SBC','NOP','ISC','CPX','SBC','INC','ISC','INX','SBC','NOP','SBD','CPX','SBC','INC','ISC', // Ex
   'BEQ','SBC','KIL','ISC','NOP','SBC','INC','ISC','SED','SBC','NOP','ISC','NOP','SBC','INC','ISC', // Fx
 ];
+
+const mneumonic_aliases = {
+  // http://www.oxyron.de/html/opcodes02.html 'Aliases used in other illegal opcode sources'
+  ASO: 'SLO',
+  LSE: 'SRE',
+  ISB: 'ISC',
+  ASR: 'ALR',
+  AII: 'SHX',
+  LAR: 'LAS',
+  JAM: 'KIL', HLT: 'KIL', STP: 'KIL',
+
+  // http://nesdev.com/undocumented_opcodes.txt
+  AAC: 'ANC',
+  AAX: 'SAX',
+  ATX: 'LAX', LXA: 'LAX', OAL: 'LAX',
+  AXA: 'AHX', SHA: 'AHX', AXA: 'AHX',
+  SBX: 'AXS',
+  DCM: 'DCP',
+  DOP: 'NOP', SKB: 'NOP', // double no-op; skip byte
+  INS: 'ISC',
+  LAE: 'LAS',
+  // note: SBC is legal opcode $E9, but also illegal $EB - renamed to SBD to disambiguate (not SBX)
+  XAS: 'SHX', SXA: 'SHX',
+  SYA: 'SHY', SAY: 'SHY',
+  TOP: 'NOP', SKW: 'NOP', // triple no-op; skip word
+  ANE: 'XAA', XXA: 'XAA',
+  SHS: 'TAS', XAS: 'TAS',
+};
 
 const imp = 0
 const imm = 1;
@@ -247,6 +275,10 @@ function parseValue(s) {
 }
 
 function asm1(mneumonic, addrmode) {
+  if (mneumonic_aliases[mneumonic] !== undefined) {
+    return asm1(mneumonic_aliases[mneumonic], addrmode);
+  }
+
   for (let opcode  = 0; opcode < mneumonics.length; ++opcode) {
     if (mneumonics[opcode] === mneumonic && addrmodes[opcode] === addrmode) {
       return opcode;

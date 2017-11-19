@@ -69,6 +69,13 @@ test('relative truncated', (t) => {
   t.end();
 });
 
+test('mneumonic aliases', (t) => {
+  t.deepEqual(asm('ANE #$00'), asm('XAA #$00'));
+  t.deepEqual(asm('XXA #$00'), asm('XAA #$00'));
+  t.equal(dis([0x8b])[0].assembly, 'XAA #$xx'); // preferred mneumonic
+  t.end();
+});
+
 test('ambiguous mneumonics', (t) => {
   for (let i = 0; i < 256; ++i) {
     const assembly = dis([i])[0].assembly;
