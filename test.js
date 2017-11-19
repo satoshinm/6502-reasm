@@ -128,23 +128,21 @@ test('partial truncated mid-operand', (t) => {
   t.end();
 });
 
-test('random', (t) => {
-  t.end();return;
+test('random disassemble and reassemble', (t) => {
   for (let i = 0; i < 100; ++i) {
-    //const size = crypto.randomBytes(1)[0];
-    const size = 2;
+    const size = crypto.randomBytes(1)[0];
     const buf = new Uint8Array(crypto.randomBytes(size));
 
     console.log(size,buf);
 
     const lines = dis(buf);
-    console.log(lines);
+    //console.log(lines);
 
     const text = formatDis(lines);
-    console.log(text);
 
     const re = new Uint8Array(asm(text));
     console.log(re);
+    console.log(text);
 
     t.deepEqual(buf, re);
   }
