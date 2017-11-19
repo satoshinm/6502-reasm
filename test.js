@@ -72,7 +72,13 @@ test('relative truncated', (t) => {
 test('ambiguous mneumonics', (t) => {
   for (let i = 0; i < 256; ++i) {
     const assembly = dis([i])[0].assembly;
-    console.log(i, assembly);
+    //t.equal(asm(assembly).length, 1); // must handle truncated
+    const r = asm(assembly)[0];
+    //console.log(i, assembly, r);
+
+    if (r != i) {
+      console.log(`Ambiguous mneumonic: ${assembly} is ${r} and ${i}`);
+    }
   }
   t.end();
 });
