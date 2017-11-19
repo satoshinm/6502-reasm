@@ -1,11 +1,11 @@
 'use strict';
 
 const test = require('tape');
-const {dis, formatDis, asm } = require('./');
+const {disasm, formatDisasm, reasm } = require('./');
 const crypto = require('crypto');
 
 test('disassemble', (t) => {
-  const lines = dis([0x78, 0xd8, 0xa9, 0x10, 0x8d, 0x00, 0x20, 0xa2, 0xff, 0x9a, 0xad, 0x02, 0x20, 0x10, 0xfb, 0xad]);
+  const lines = disasm([0x78, 0xd8, 0xa9, 0x10, 0x8d, 0x00, 0x20, 0xa2, 0xff, 0x9a, 0xad, 0x02, 0x20, 0x10, 0xfb, 0xad]);
   console.log(lines);
 
   t.equal(lines.length, 9);
@@ -22,8 +22,8 @@ test('disassemble', (t) => {
 });
 
 test('disassemble format', (t) => {
-  const lines = dis([0x78, 0xd8, 0xa9, 0x10, 0x8d, 0x00, 0x20, 0xa2, 0xff, 0x9a, 0xad, 0x02, 0x20, 0x10, 0xfb, 0xad]);
-  const formattedDisassembly = formatDis(lines);
+  const lines = disasm([0x78, 0xd8, 0xa9, 0x10, 0x8d, 0x00, 0x20, 0xa2, 0xff, 0x9a, 0xad, 0x02, 0x20, 0x10, 0xfb, 0xad]);
+  const formattedDisassembly = formatDisasm(lines);
 
   console.log(formattedDisassembly);
 
@@ -53,34 +53,34 @@ test('reassemble', (t) => {
 0000000d    10 fb        BPL -5
 0000000f    ad xx xx     LDA $xxxx
 `;
-  t.deepEqual(asm(text), [0x78, 0xd8, 0xa9, 0x10, 0x8d, 0x00, 0x20, 0xa2, 0xff, 0x9a, 0xad, 0x02, 0x20, 0x10, 0xfb, 0xad]);
+  t.deepEqual(reasm(text), [0x78, 0xd8, 0xa9, 0x10, 0x8d, 0x00, 0x20, 0xa2, 0xff, 0x9a, 0xad, 0x02, 0x20, 0x10, 0xfb, 0xad]);
   t.end();
 });
 
 test('indirect Y', (t) => {
-  t.equal(dis([0xf1, 0x94])[0].assembly, 'SBC ($94),Y');
-  t.deepEqual(asm('SBC ($94),Y'), [0xf1, 0x94]);
+  t.equal(disasm([0xf1, 0x94])[0].assembly, 'SBC ($94),Y');
+  t.deepEqual(reasm('SBC ($94),Y'), [0xf1, 0x94]);
   t.end();
 });
 
 test('relative truncated', (t) => {
-  t.equal(dis([0x10])[0].assembly, 'BPL +xx');
-  t.deepEqual(asm('BPL +xx'), [0x10]);
+  t.equal(disasm([0x10])[0].assembly, 'BPL +xx');
+  t.deepEqual(reasm('BPL +xx'), [0x10]);
   t.end();
 });
 
 test('mneumonic aliases', (t) => {
-  t.deepEqual(asm('ANE #$00'), asm('XAA #$00'));
-  t.deepEqual(asm('XXA #$00'), asm('XAA #$00'));
-  t.equal(dis([0x8b])[0].assembly, 'XAA #$xx'); // preferred mneumonic
+  t.deepEqual(reasm('ANE #$00'), reasm('XAA #$00'));
+  t.deepEqual(reasm('XXA #$00'), reasm('XAA #$00'));
+  t.equal(disasm([0x8b])[0].assembly, 'XAA #$xx'); // preferred mneumonic
   t.end();
 });
 
 test('no ambiguous mneumonics', (t) => {
   for (let i = 0; i < 256; ++i) {
-    const assembly = dis([i])[0].assembly;
-    //t.equal(asm(assembly).length, 1); // must handle truncated
-    const r = asm(assembly)[0];
+    const assembly = disasm([i])[0].assembly;
+    //t.equal(reasm(assembly).length, 1); // must handle truncated
+    const r = reasm(assembly)[0];
     console.log(i, assembly, r);
 
     if (r != i) {
@@ -95,11 +95,11 @@ test('no ambiguous mneumonics', (t) => {
 
 function roundtrip(t, bytes) {
   console.log('disassembling bytes',bytes);
-  const d = dis(bytes);
+  const d = disasm(bytes);
   console.log('disassembly',d);
-  const f = formatDis(d);
-  console.log('formatDis',f);
-  const r = asm(f);
+  const f = formatDisasm(d);
+  console.log('formatDisasm',f);
+  const r = reasm(f);
   console.log('reassembled',r);
   t.deepEqual(r, bytes);
 }
@@ -113,18 +113,18 @@ test('roundtrip single bytes', (t) => {
 
 
 test('empty', (t) => {
-  t.deepEqual(dis([]), []);
-  t.equal(formatDis(dis([])).length, 0);
-  t.equal(formatDis([]).length, 0);
-  t.deepEqual(asm(""), []);
+  t.deepEqual(disasm([]), []);
+  t.equal(formatDisasm(disasm([])).length, 0);
+  t.equal(formatDisasm([]).length, 0);
+  t.deepEqual(reasm(""), []);
   t.end();
 });
 
 test('partial truncated mid-operand', (t) => {
-  t.equal(formatDis(dis([0x20, 0xf4])), '00000000    20 f4 xx     JSR $xxf4\n');
-  t.deepEqual(asm('JSR $xxf4'), [0x20, 0xf4]);
-  t.deepEqual(asm('JSR $80f4'), [0x20, 0xf4, 0x80]);
-  t.deepEqual(asm('JSR $xxxx'), [0x20]);
+  t.equal(formatDisasm(disasm([0x20, 0xf4])), '00000000    20 f4 xx     JSR $xxf4\n');
+  t.deepEqual(reasm('JSR $xxf4'), [0x20, 0xf4]);
+  t.deepEqual(reasm('JSR $80f4'), [0x20, 0xf4, 0x80]);
+  t.deepEqual(reasm('JSR $xxxx'), [0x20]);
   t.end();
 });
 
@@ -135,12 +135,12 @@ test('random disassemble and reassemble', (t) => {
 
     console.log(size,buf);
 
-    const lines = dis(buf);
+    const lines = disasm(buf);
     //console.log(lines);
 
-    const text = formatDis(lines);
+    const text = formatDisasm(lines);
 
-    const re = new Uint8Array(asm(text));
+    const re = new Uint8Array(reasm(text));
     console.log(re);
     console.log(text);
 

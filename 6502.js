@@ -158,7 +158,7 @@ function getOperandSize(addrmode) {
   }
 }
 
-function dis1(buf) {
+function disasm1(buf) {
   const opcode = buf[0];
   const mneumonic = mneumonics[opcode];
   const addrmode = addrmodes[opcode];
@@ -210,11 +210,11 @@ function dis1(buf) {
   return { bytesRead, assembly, bytes };
 }
 
-function dis(buf, pc=0) {
+function disasm(buf, pc=0) {
   const lines = [];
 
   while (pc < buf.length) {
-    const { bytesRead, assembly, bytes } = dis1(buf.slice(pc));
+    const { bytesRead, assembly, bytes } = disasm1(buf.slice(pc));
 
     lines.push({
       address: pc,
@@ -233,7 +233,7 @@ function hexAddress(n) {
   return '00000000'.substring(0, 8 - s.length) + s;
 }
 
-function formatDis(lines) {
+function formatDisasm(lines) {
   let text = '';
 
   lines.forEach((line) => {
@@ -335,9 +335,9 @@ function parseValue(s) {
   throw Error(`bad operand value: ${s}`);
 }
 
-function asm1(mneumonic, addrmode) {
+function reasm1(mneumonic, addrmode) {
   if (mneumonic_aliases[mneumonic] !== undefined) {
-    return asm1(mneumonic_aliases[mneumonic], addrmode);
+    return reasm1(mneumonic_aliases[mneumonic], addrmode);
   }
 
   for (let opcode = 0; opcode < mneumonics.length; ++opcode) {
@@ -353,7 +353,7 @@ function asm1(mneumonic, addrmode) {
   }
 }
 
-function asm(text) {
+function reasm(text) {
   const lines = text.split('\n');
   let bytes = [];
   lines.forEach((line) => {
@@ -367,7 +367,7 @@ function asm(text) {
     const operandText = match[2];
 
     const { operandBytes, addrmode } = parseOperand(operandText);
-    const opcode = asm1(mneumonic, addrmode);
+    const opcode = reasm1(mneumonic, addrmode);
     if (opcode === undefined) throw Error(`no mneumonic ${mneumonic} found for addrmode ${addrmode} in ${line}`);
 
     bytes.push(opcode);
@@ -382,4 +382,4 @@ function asm(text) {
   return bytes;
 }
 
-module.exports = { dis, formatDis, asm };
+module.exports = { disasm, formatDisasm, reasm };
