@@ -112,7 +112,7 @@ function dis1(buf) {
     case zpx: operand = readByte() + ',X'; break;
     case zpy: operand = readByte() + ',Y'; break;
     case izx: operand = '(' + readByte() + ',X)'; break;
-    case izy: operand = '(' + readByte() + ',Y)'; break;
+    case izy: operand = '(' + readByte() + '),Y'; break;
     case abs: operand = readWord(); break;
     case abx: operand = readWord() + ',X'; break;
     case aby: operand = readWord() + ',Y'; break;
@@ -169,28 +169,92 @@ function formatDis(lines) {
   return text;
 }
 
-// TODO: parse addressing mode
 function parseOperand(s) {
+  let addrmode;
+
+  if (s.length == 0) {
+    addrmode = imp;
+  } else if (s.startsWith('#')) {
+    var { value, size } = parseValue(s.substring(1));
+    addrmode = imm;
+  } else if (s.endsWith(',X)')) {
+    var { value, size } = parseValue(s.substring(1, s.length - 3));
+    addrmode = izx;
+  } else if (s.endsWith('),Y')) {
+    var { value, size } = parseValue(s.substring(1, s.length - 3));
+    addrmode = izy;
+  } else if (s.endsWith(')')) {
+    var { value, size } = parseValue(s.substring(1, s.length - 1));
+    addrmode = ind;
+  } else if (s.endsWith(',X')) {
+    var { value, size } = parseValue(s.substring(0, s.length - 2));
+    if (size === 1) {
+      addrmode = zpx;
+    } else {
+      addrmode = abx;
+    }
+  } else if (s.endsWith(',Y')) {
+    var { value, size } = parseValue(s.substring(0, s.length - 2));
+    if (size === 1) {
+      addrmode = zpy;
+    } else {
+      addrmode = aby;
+    }
+  } else if (s.startsWith('-') || s.startsWith('+')) {
+    var { value, size } = parseValue(s);
+    addrmode = rel;
+  } else {
+    var { value, size } = parseValue(s);
+    if (size === 1) {
+      addrmode = zp;
+    } else {
+      addrmode = abs;
+    }
+  }
+
+  return { value, addrmode };
+}
+
+function parseValue(s) {
   if (s.startsWith('-') || s.startsWith('+')) {
     let value = parseInt(s, 10);
     if (value < 0) value = 0x100 + value;
-    return value;
+    const size = 1;
+    return { value, size };
   }
 
-  let match = s.match(/([$%]?)([0-9a-fA-F]+)/);
+  let match = s.match(/([$%]?)([0-9a-fA-Fx]+)/);
   if (match) {
     let radix = 10;
     if (match[1] === '$') radix = 16;
-    else if (match[2] === '%') radix = 2;
+    else if (match[1] === '&') radix = 10;
+    else if (match[1] === '%') radix = 2;
 
-    const value = parseInt(match[2], radix);
-    return value;
+    let value;
+    if (match[2] === 'xx' || match[2] === 'xxxx') value = undefined;
+    else value = parseInt(match[2], radix);
+
+    let size;
+    if (match[2].length <= 2) size = 1;
+    else size = 2;
+
+    return { value, size };
+  }
+
+  throw Error(`bad operand value: ${s}`);
+}
+
+function asm1(mneumonic, addrmode) {
+  for (let opcode  = 0; opcode < mneumonics.length; ++opcode) {
+    if (mneumonics[opcode] === mneumonic && addrmodes[opcode] === addrmode) {
+      return opcode;
+    }
   }
 }
 
 function asm(text) {
   const lines = text.split('\n');
-  const bytes = [];
+  let bytes = [];
   lines.forEach((line) => {
     if (line.match(/^\s*$/)) return;
     if (line.startsWith(';')) return;
@@ -201,18 +265,14 @@ function asm(text) {
     const mneumonic = match[1];
     const operandText = match[2];
 
-    const opcode = mneumonics.indexOf(mneumonic);
-    if (opcode === -1) throw new Error(`bad opcode mneumonic: ${opcode} in ${line}`);
+    const { value, addrmode } = parseOperand(operandText);
+    const opcode = asm1(mneumonic, addrmode);
+    if (opcode === undefined) throw Error(`no mneumonic ${mneumonic} found for addrmode ${addrmode} in ${line}`);
 
     bytes.push(opcode);
 
-    // TODO: get addressing mode from operand, can't do this
-    const value = parseOperand(operandText);
-    const size = getOperandSize(addrmodes[opcode]);
-    console.log(mneumonic,'OPCODE=',opcode,'ADDRMODE=',addrmodes[opcode],'SIZE',size);
+    const size = getOperandSize(addrmode);
 
-    console.log('LINE',line,size);
-    
     switch (size) {
       case 0:
         break;
@@ -222,11 +282,21 @@ function asm(text) {
         break;
 
       case 2:
-        bytes.push(value & 0xff);
-        bytes.push(value >> 8);
+        if (value === undefined) {
+          bytes.push(undefined);
+          bytes.push(undefined);
+        } else {
+          bytes.push(value & 0xff);
+          bytes.push(value >> 8);
+        }
         break;
     }
   });
+
+  // trailing bytes undefined = truncated
+  while (bytes[bytes.length - 1] === undefined) {
+    bytes = bytes.slice(0, bytes.length - 1);
+  }
 
   return bytes;
 }

@@ -2,6 +2,7 @@
 
 const test = require('tape');
 const {dis, formatDis, asm} = require('./');
+const crypto = require('crypto');
 
 test('disassemble', (t) => {
   const lines = dis([0x78, 0xd8, 0xa9, 0x10, 0x8d, 0x00, 0x20, 0xa2, 0xff, 0x9a, 0xad, 0x02, 0x20, 0x10, 0xfb, 0xad]);
@@ -52,6 +53,56 @@ test('reassemble', (t) => {
 0000000d    10 fb        BPL -5
 0000000f    ad xx xx     LDA $xxxx
 `;
-  console.log(asm(text));
+  t.deepEqual(asm(text), [0x78, 0xd8, 0xa9, 0x10, 0x8d, 0x00, 0x20, 0xa2, 0xff, 0x9a, 0xad, 0x02, 0x20, 0x10, 0xfb, 0xad]);
+  t.end();
+});
+
+test('indirect Y', (t) => {
+  t.equal(dis([0xf1, 0x94])[0].assembly, 'SBC ($94),Y');
+  t.deepEqual(asm('SBC ($94),Y'), [0xf1, 0x94]);
+  t.end();
+});
+
+function roundtrip(t, bytes) {
+  console.log('disassembling bytes',bytes);
+  const d = dis(bytes);
+  console.log('disassembly',d);
+  const f = formatDis(d);
+  console.log('formatDis',f);
+  const r = asm(f);
+  console.log('reassembled',r);
+  t.deepEqual(r, bytes);
+}
+
+test('roundtrip single bytes', (t) => {
+  t.end();return;
+  //TODO
+  for (let i = 0; i < 256; ++i) {
+    roundtrip(t, [i]);
+  }
+  t.end();
+});
+
+test('random', (t) => {
+  t.end();return;
+
+  for (let i = 0; i < 100; ++i) {
+    const size = crypto.randomBytes(1)[0];
+    const buf = new Uint8Array(crypto.randomBytes(size));
+
+    console.log(size,buf);
+
+    const lines = dis(buf);
+    console.log(lines);
+
+    const text = formatDis(lines);
+    console.log(text);
+
+    const re = new Uint8Array(asm(text));
+    console.log(re);
+
+    t.deepEqual(buf, re);
+  }
+
   t.end();
 });
