@@ -1,0 +1,31 @@
+{
+  "name": "6502-reasm",
+  "version": "0.0.1",
+  "description": "6502 disassembler and reassembler",
+  "main": "6502.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/satoshinm/6502-reasm.git"
+  },
+  "keywords": [
+    "nes",
+    "6052",
+    "asm",
+    "disasm",
+    "assembler",
+    "disassembler",
+    "patching"
+  ],
+  "author": "Satoshi N. M.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/satoshinm/6502-reasm/issues"
+  },
+  "homepage": "https://github.com/satoshinm/6502-reasm#readme",
+  "devDependencies": {
+    "tape": "^4.8.0"
+  }
+}
