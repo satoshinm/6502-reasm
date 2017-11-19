@@ -120,11 +120,17 @@ test('empty', (t) => {
   t.end();
 });
 
+test('partial truncated mid-operand', (t) => {
+  t.equal(formatDis(dis([0x20, 0xf4])), '00000000    20 f4 xx     JSR $xxf4\n');
+  console.log(asm('JSR $xxf4'));
+  t.end();
+});
+
 test('random', (t) => {
   t.end();return;
-
   for (let i = 0; i < 100; ++i) {
-    const size = crypto.randomBytes(1)[0];
+    //const size = crypto.randomBytes(1)[0];
+    const size = 2;
     const buf = new Uint8Array(crypto.randomBytes(size));
 
     console.log(size,buf);

@@ -314,13 +314,25 @@ function parseValue(s) {
     else if (match[1] === '&') radix = 10;
     else if (match[1] === '%') radix = 2;
 
-    let value;
-    if (match[2] === 'xx' || match[2] === 'xxxx') value = undefined;
-    else value = parseInt(match[2], radix);
-
-    let size;
-    if (match[2].length <= 2) size = 1;
-    else size = 2;
+    let value, size;
+    if (match[2] === 'xx') {
+      value = undefined;
+      size = 1;
+    } else if (match[2] === 'xxxx') {
+      value = undefined;
+      size = 2;
+    } else if (match[2].startsWith('xx')) {
+      // TODO: support partially truncated operands? e.g. JSR $xxf4 -> [0x20, 0xf4]
+      value = parseInt(match[2].substring(2), radix);
+      size = 2;
+    } else {
+      value = parseInt(match[2], radix);
+      if (match[2].length <= 2) {
+        size = 1;
+      } else {
+        size = 2;
+      }
+    }
 
     return { value, size };
   }
