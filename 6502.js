@@ -50,55 +50,55 @@ const mneumonic_aliases = {
 
 const ambiguous_opcodes = {
   // KIL
-  0x02: 'A',
-  0x12: 'B',
-  0x22: 'C',
-  0x32: 'D',
-  0x42: 'E',
-  0x52: 'F',
-  0x62: 'G',
-  0x72: 'H',
-  0x92: 'I',
-  0xb2: 'J',
-  0xd2: 'K',
-  0xf2: 'L',
+  0x02: '', // arbitrarily selecting this one
+  0x12: '.B',
+  0x22: '.C',
+  0x32: '.D',
+  0x42: '.E',
+  0x52: '.F',
+  0x62: '.G',
+  0x72: '.H',
+  0x92: '.I',
+  0xb2: '.J',
+  0xd2: '.K',
+  0xf2: '.L',
 
   // NOP
-  0x1a: 'I',
-  0x3a: 'A',
-  0x5a: 'B',
-  0x7a: 'C',
-  0xda: 'D',
+  0x1a: '.I',
+  0x3a: '.A',
+  0x5a: '.B',
+  0x7a: '.C',
+  0xda: '.D',
   0xea: '', // official
-  0xfa: 'F',
+  0xfa: '.F',
 
   // NOP #$
-  0x80: 'A',
-  0x82: 'B',
-  0x89: 'C',
-  0xc2: 'D',
-  0xe2: 'E',
+  0x80: '',
+  0x82: '.B',
+  0x89: '.C',
+  0xc2: '.D',
+  0xe2: '.E',
 
   // NOP $
-  0x04: 'A',
-  0x44: 'B',
-  0x64: 'C',
+  0x04: '',
+  0x44: '.B',
+  0x64: '.C',
 
   // NOP $xx,X
-  0x14: 'A',
-  0x34: 'B',
-  0x54: 'C',
-  0x74: 'D',
-  0xd4: 'E',
-  0xf4: 'F',
+  0x14: '',
+  0x34: '.B',
+  0x54: '.C',
+  0x74: '.D',
+  0xd4: '.E',
+  0xf4: '.F',
 
   // NOP $xxxx,X
-  0x1c: 'A',
-  0x3c: 'B',
-  0x5c: 'C',
-  0x7c: 'D',
-  0xdc: 'E',
-  0xfc: 'F',
+  0x1c: '',
+  0x3c: '.B',
+  0x5c: '.C',
+  0x7c: '.D',
+  0xdc: '.E',
+  0xfc: '.F',
 };
 
 const imp = 0
@@ -204,7 +204,8 @@ function dis1(buf) {
   }
 
   const bytesRead = 1 + getOperandSize(addrmode);
-  const assembly = mneumonic + (operand.length !== 0 ? ' ' + operand : '');
+  const disambiguation_suffix = ambiguous_opcodes[opcode] || '';
+  const assembly = mneumonic + disambiguation_suffix + (operand.length !== 0 ? ' ' + operand : '');
 
   return { bytesRead, assembly, bytes };
 }
@@ -332,8 +333,14 @@ function asm1(mneumonic, addrmode) {
     return asm1(mneumonic_aliases[mneumonic], addrmode);
   }
 
-  for (let opcode  = 0; opcode < mneumonics.length; ++opcode) {
-    if (mneumonics[opcode] === mneumonic && addrmodes[opcode] === addrmode) {
+  for (let opcode = 0; opcode < mneumonics.length; ++opcode) {
+    if (mneumonics[opcode] === mneumonic && addrmodes[opcode] === addrmode && ambiguous_opcodes[opcode] === undefined) {
+      return opcode;
+    }
+  }
+
+  for (let opcode = 0; opcode < mneumonics.length; ++opcode) {
+    if (mneumonics[opcode] + ambiguous_opcodes[opcode] === mneumonic && addrmodes[opcode] === addrmode) {
       return opcode;
     }
   }
@@ -346,7 +353,7 @@ function asm(text) {
     if (line.match(/^\s*$/)) return;
     if (line.startsWith(';')) return;
 
-    const match = line.match(/([A-Za-z]{3}) ?(\S*)/)
+    const match = line.match(/([A-Za-z.]{3,}) ?(\S*)/)
     if (!match) throw Error(`assembly line bad format: ${line}`);
 
     const mneumonic = match[1];
@@ -388,4 +395,4 @@ function asm(text) {
   return bytes;
 }
 
-module.exports = { dis, formatDis, asm, ambiguous_opcodes };
+module.exports = { dis, formatDis, asm };
