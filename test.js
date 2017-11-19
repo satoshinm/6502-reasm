@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('tape');
-const {dis, formatDis, asm} = require('./');
+const {dis, formatDis, asm, ambiguous_opcodes} = require('./');
 const crypto = require('crypto');
 
 test('disassemble', (t) => {
@@ -84,7 +84,9 @@ test('ambiguous mneumonics', (t) => {
     //console.log(i, assembly, r);
 
     if (r != i) {
-      console.log(`Ambiguous mneumonic: ${assembly} is ${r} and ${i}`);
+      console.log(`Ambiguous mneumonic: ${assembly} is 0x${r.toString(16)} and 0x${i.toString(16)}`);
+      console.log(ambiguous_opcodes[i]);
+      t.equal(ambiguous_opcodes[i] !== undefined, true);
     }
   }
   t.end();

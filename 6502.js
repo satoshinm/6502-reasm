@@ -48,6 +48,59 @@ const mneumonic_aliases = {
   SHS: 'TAS', XAS: 'TAS',
 };
 
+const ambiguous_opcodes = {
+  // KIL
+  0x02: 'A',
+  0x12: 'B',
+  0x22: 'C',
+  0x32: 'D',
+  0x42: 'E',
+  0x52: 'F',
+  0x62: 'G',
+  0x72: 'H',
+  0x92: 'I',
+  0xb2: 'J',
+  0xd2: 'K',
+  0xf2: 'L',
+
+  // NOP
+  0x1a: 'I',
+  0x3a: 'A',
+  0x5a: 'B',
+  0x7a: 'C',
+  0xda: 'D',
+  0xea: '', // official
+  0xfa: 'F',
+
+  // NOP #$
+  0x80: 'A',
+  0x82: 'B',
+  0x89: 'C',
+  0xc2: 'D',
+  0xe2: 'E',
+
+  // NOP $
+  0x04: 'A',
+  0x44: 'B',
+  0x64: 'C',
+
+  // NOP $xx,X
+  0x14: 'A',
+  0x34: 'B',
+  0x54: 'C',
+  0x74: 'D',
+  0xd4: 'E',
+  0xf4: 'F',
+
+  // NOP $xxxx,X
+  0x1c: 'A',
+  0x3c: 'B',
+  0x5c: 'C',
+  0x7c: 'D',
+  0xdc: 'E',
+  0xfc: 'F',
+};
+
 const imp = 0
 const imm = 1;
 const zp =  2;
@@ -335,4 +388,4 @@ function asm(text) {
   return bytes;
 }
 
-module.exports = { dis, formatDis, asm };
+module.exports = { dis, formatDis, asm, ambiguous_opcodes };
