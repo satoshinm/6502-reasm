@@ -65,6 +65,7 @@ test('indirect Y', (t) => {
 
 test('relative truncated', (t) => {
   t.equal(dis([0x10])[0].assembly, 'BPL +xx');
+  t.deepEqual(asm('BPL +xx'), [0x10]);
   t.end();
 });
 

@@ -218,6 +218,7 @@ function parseOperand(s) {
 
 function parseValue(s) {
   if (s.startsWith('-') || s.startsWith('+')) {
+    if (s === '+xx') return { value: undefined, size: 1 };
     let value = parseInt(s, 10);
     if (value < 0) value = 0x100 + value;
     const size = 1;
