@@ -253,58 +253,59 @@ function formatDis(lines) {
 }
 
 function parseOperand(s) {
-  let addrmode;
+  let operandBytes, addrmode;
 
   if (s.length == 0) {
+    operandBytes = [];
     addrmode = imp;
   } else if (s.startsWith('#')) {
-    var { value, size } = parseValue(s.substring(1));
+    operandBytes = parseValue(s.substring(1));
     addrmode = imm;
   } else if (s.endsWith(',X)')) {
-    var { value, size } = parseValue(s.substring(1, s.length - 3));
+    operandBytes = parseValue(s.substring(1, s.length - 3));
     addrmode = izx;
   } else if (s.endsWith('),Y')) {
-    var { value, size } = parseValue(s.substring(1, s.length - 3));
+    operandBytes = parseValue(s.substring(1, s.length - 3));
     addrmode = izy;
   } else if (s.endsWith(')')) {
-    var { value, size } = parseValue(s.substring(1, s.length - 1));
+    operandBytes = parseValue(s.substring(1, s.length - 1));
     addrmode = ind;
   } else if (s.endsWith(',X')) {
-    var { value, size } = parseValue(s.substring(0, s.length - 2));
-    if (size === 1) {
+    operandBytes = parseValue(s.substring(0, s.length - 2));
+    if (operandBytes.length === 1) {
       addrmode = zpx;
     } else {
       addrmode = abx;
     }
   } else if (s.endsWith(',Y')) {
-    var { value, size } = parseValue(s.substring(0, s.length - 2));
-    if (size === 1) {
+    operandBytes = parseValue(s.substring(0, s.length - 2));
+    if (operandBytes.length === 1) {
       addrmode = zpy;
     } else {
       addrmode = aby;
     }
   } else if (s.startsWith('-') || s.startsWith('+')) {
-    var { value, size } = parseValue(s);
+    operandBytes = parseValue(s);
     addrmode = rel;
   } else {
-    var { value, size } = parseValue(s);
-    if (size === 1) {
+    operandBytes = parseValue(s);
+    if (operandBytes.length === 1) {
       addrmode = zp;
     } else {
       addrmode = abs;
     }
   }
 
-  return { value, addrmode };
+  return { operandBytes, addrmode };
 }
 
 function parseValue(s) {
+  let value;
   if (s.startsWith('-') || s.startsWith('+')) {
-    if (s === '+xx') return { value: undefined, size: 1 };
-    let value = parseInt(s, 10);
+    if (s === '+xx') return [undefined];
+    value = parseInt(s, 10);
     if (value < 0) value = 0x100 + value;
-    const size = 1;
-    return { value, size };
+    return [value];
   }
 
   let match = s.match(/([$%]?)([0-9a-fA-Fx]+)/);
@@ -314,27 +315,21 @@ function parseValue(s) {
     else if (match[1] === '&') radix = 10;
     else if (match[1] === '%') radix = 2;
 
-    let value, size;
     if (match[2] === 'xx') {
-      value = undefined;
-      size = 1;
+      return [undefined];
     } else if (match[2] === 'xxxx') {
-      value = undefined;
-      size = 2;
+      return [undefined, undefined];
     } else if (match[2].startsWith('xx')) {
-      // TODO: support partially truncated operands? e.g. JSR $xxf4 -> [0x20, 0xf4]
       value = parseInt(match[2].substring(2), radix);
-      size = 2;
+      return [value, undefined];
     } else {
       value = parseInt(match[2], radix);
       if (match[2].length <= 2) {
-        size = 1;
+        return [value];
       } else {
-        size = 2;
+        return [value & 0xff, value >> 8];
       }
     }
-
-    return { value, size };
   }
 
   throw Error(`bad operand value: ${s}`);
@@ -371,32 +366,12 @@ function asm(text) {
     const mneumonic = match[1];
     const operandText = match[2];
 
-    const { value, addrmode } = parseOperand(operandText);
+    const { operandBytes, addrmode } = parseOperand(operandText);
     const opcode = asm1(mneumonic, addrmode);
     if (opcode === undefined) throw Error(`no mneumonic ${mneumonic} found for addrmode ${addrmode} in ${line}`);
 
     bytes.push(opcode);
-
-    const size = getOperandSize(addrmode);
-
-    switch (size) {
-      case 0:
-        break;
-
-      case 1:
-        bytes.push(value);
-        break;
-
-      case 2:
-        if (value === undefined) {
-          bytes.push(undefined);
-          bytes.push(undefined);
-        } else {
-          bytes.push(value & 0xff);
-          bytes.push(value >> 8);
-        }
-        break;
-    }
+    bytes = bytes.concat(operandBytes);
   });
 
   // trailing bytes undefined = truncated
