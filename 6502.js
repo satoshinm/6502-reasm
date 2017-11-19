@@ -59,23 +59,38 @@ function hexByte(n) {
   return n.toString(16);
 }
 
+function getOperandSize(addrmode) {
+  switch (addrmode) {
+    case imp: return 0;
+    case imm: return 1;
+    case zp:  return 1;
+    case zpx: return 1;
+    case zpy: return 1;
+    case izx: return 1;
+    case izy: return 1;
+    case abs: return 2;
+    case abx: return 2;
+    case aby: return 2;
+    case ind: return 2;
+    case rel: return 1;
+    default: throw Error(`invalid addressing mode ${addrmode}`);
+  }
+}
+
 function dis1(buf) {
   const opcode = buf[0];
   const mneumonic = mneumonics[opcode];
   const addrmode = addrmodes[opcode];
 
   let operand;
-  let size = 0;
   let bytes = [opcode];
 
   function readByte() {
-    size = 1;
     bytes[1] = buf[1];
     return '$' + hexByte(buf[1]);
   }
 
   function readSignedByte() {
-    size = 1;
     bytes[1] = buf[1];
     if (buf[1] > 0x7f) {
       return '-' + -(buf[1] - 0x100);
@@ -85,7 +100,6 @@ function dis1(buf) {
   }
  
   function readWord() {
-    size = 2;
     bytes[1] = buf[1];
     bytes[2] = buf[2];
     return '$' + hexByte(buf[2]) + hexByte(buf[1]);
@@ -107,7 +121,7 @@ function dis1(buf) {
     default: throw Error(`invalid addressing mode ${addrmode} in opcode ${opcode} of buffer ${buf[0]}`);
   }
 
-  const bytesRead = 1 + size;
+  const bytesRead = 1 + getOperandSize(addrmode);
   const assembly = mneumonic + (operand.length !== 0 ? ' ' + operand : '');
 
   return { bytesRead, assembly, bytes };
@@ -155,4 +169,66 @@ function formatDis(lines) {
   return text;
 }
 
-module.exports = { dis, formatDis };
+// TODO: parse addressing mode
+function parseOperand(s) {
+  if (s.startsWith('-') || s.startsWith('+')) {
+    let value = parseInt(s, 10);
+    if (value < 0) value = 0x100 + value;
+    return value;
+  }
+
+  let match = s.match(/([$%]?)([0-9a-fA-F]+)/);
+  if (match) {
+    let radix = 10;
+    if (match[1] === '$') radix = 16;
+    else if (match[2] === '%') radix = 2;
+
+    const value = parseInt(match[2], radix);
+    return value;
+  }
+}
+
+function asm(text) {
+  const lines = text.split('\n');
+  const bytes = [];
+  lines.forEach((line) => {
+    if (line.match(/^\s*$/)) return;
+    if (line.startsWith(';')) return;
+
+    const match = line.match(/([A-Za-z]{3}) ?(\S*)/)
+    if (!match) throw Error(`assembly line bad format: ${line}`);
+
+    const mneumonic = match[1];
+    const operandText = match[2];
+
+    const opcode = mneumonics.indexOf(mneumonic);
+    if (opcode === -1) throw new Error(`bad opcode mneumonic: ${opcode} in ${line}`);
+
+    bytes.push(opcode);
+
+    // TODO: get addressing mode from operand, can't do this
+    const value = parseOperand(operandText);
+    const size = getOperandSize(addrmodes[opcode]);
+    console.log(mneumonic,'OPCODE=',opcode,'ADDRMODE=',addrmodes[opcode],'SIZE',size);
+
+    console.log('LINE',line,size);
+    
+    switch (size) {
+      case 0:
+        break;
+
+      case 1:
+        bytes.push(value);
+        break;
+
+      case 2:
+        bytes.push(value & 0xff);
+        bytes.push(value >> 8);
+        break;
+    }
+  });
+
+  return bytes;
+}
+
+module.exports = { dis, formatDis, asm };
