@@ -122,7 +122,9 @@ test('empty', (t) => {
 
 test('partial truncated mid-operand', (t) => {
   t.equal(formatDis(dis([0x20, 0xf4])), '00000000    20 f4 xx     JSR $xxf4\n');
-  console.log(asm('JSR $xxf4'));
+  t.deepEqual(asm('JSR $xxf4'), [0x20, 0xf4]);
+  t.deepEqual(asm('JSR $80f4'), [0x20, 0xf4, 0x80]);
+  t.deepEqual(asm('JSR $xxxx'), [0x20]);
   t.end();
 });
 
