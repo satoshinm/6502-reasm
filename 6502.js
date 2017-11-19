@@ -4,7 +4,7 @@ const mneumonics = [
 // x0   x1    x2    x3    x4    x5    x6    x7    x8    x9    xA    xB    xC    xD    xE    xF
   'BRK','ORA','KIL','SLO','NOP','ORA','ASL','SLO','PHP','ORA','ASL','ANC','NOP','ORA','ASL','SLO', // 0x
   'BPL','ORA','KIL','SLO','NOP','ORA','ASL','SLO','CLC','ORA','NOP','SLO','NOP','ORA','ASL','SLO', // 1x
-  'JSR','AND','KIL','RLA','BIT','AND','ROL','RLA','PLP','AND','ROL','ANC','BIT','AND','ROL','RLA', // 2x
+  'JSR','AND','KIL','RLA','BIT','AND','ROL','RLA','PLP','AND','ROL','ANT','BIT','AND','ROL','RLA', // 2x
   'BMI','AND','KIL','RLA','NOP','AND','ROL','RLA','SEC','AND','NOP','RLA','NOP','AND','ROL','RLA', // 3x
   'RTI','EOR','KIL','SRE','NOP','EOR','LSR','SRE','PHA','EOR','LSR','ALR','JMP','EOR','LSR','SRE', // 4x
   'BVC','EOR','KIL','SRE','NOP','EOR','LSR','SRE','CLI','EOR','NOP','SRE','NOP','EOR','LSR','SRE', // 5x
