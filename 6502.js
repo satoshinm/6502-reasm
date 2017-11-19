@@ -388,7 +388,7 @@ function asm(text) {
   });
 
   // trailing bytes undefined = truncated
-  while (bytes[bytes.length - 1] === undefined) {
+  while (bytes.length > 0 && bytes[bytes.length - 1] === undefined) {
     bytes = bytes.slice(0, bytes.length - 1);
   }
 

@@ -105,11 +105,18 @@ function roundtrip(t, bytes) {
 }
 
 test('roundtrip single bytes', (t) => {
-  t.end();return;
-  //TODO
   for (let i = 0; i < 256; ++i) {
     roundtrip(t, [i]);
   }
+  t.end();
+});
+
+
+test('empty', (t) => {
+  t.deepEqual(dis([]), []);
+  t.equal(formatDis(dis([])).length, 0);
+  t.equal(formatDis([]).length, 0);
+  t.deepEqual(asm(""), []);
   t.end();
 });
 
