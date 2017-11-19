@@ -63,6 +63,19 @@ test('indirect Y', (t) => {
   t.end();
 });
 
+test('relative truncated', (t) => {
+  t.equal(dis([0x10])[0].assembly, 'BPL +xx');
+  t.end();
+});
+
+test('ambiguous mneumonics', (t) => {
+  for (let i = 0; i < 256; ++i) {
+    const assembly = dis([i])[0].assembly;
+    console.log(i, assembly);
+  }
+  t.end();
+});
+
 function roundtrip(t, bytes) {
   console.log('disassembling bytes',bytes);
   const d = dis(bytes);

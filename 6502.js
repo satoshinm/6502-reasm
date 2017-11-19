@@ -92,6 +92,7 @@ function dis1(buf) {
 
   function readSignedByte() {
     bytes[1] = buf[1];
+    if (buf[1] === undefined) return '+xx';
     if (buf[1] > 0x7f) {
       return '-' + -(buf[1] - 0x100);
     } else {
