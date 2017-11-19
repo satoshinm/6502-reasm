@@ -210,14 +210,15 @@ function disasm1(buf) {
   return { bytesRead, assembly, bytes };
 }
 
-function disasm(buf, pc=0) {
+function disasm(buf, origin=0) {
   const lines = [];
+  let pc = 0;
 
   while (pc < buf.length) {
     const { bytesRead, assembly, bytes } = disasm1(buf.slice(pc));
 
     lines.push({
-      address: pc,
+      address: origin + pc,
       assembly: assembly,
       bytes: bytes,
     });

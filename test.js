@@ -41,6 +41,27 @@ test('disassemble format', (t) => {
   t.end();
 });
 
+test('disassemble format origin', (t) => {
+  const lines = disasm([0x78, 0xd8, 0xa9, 0x10, 0x8d, 0x00, 0x20, 0xa2, 0xff, 0x9a, 0xad, 0x02, 0x20, 0x10, 0xfb, 0xad], 0x8000);
+  const formattedDisassembly = formatDisasm(lines);
+
+  console.log(formattedDisassembly);
+
+  t.equal(formattedDisassembly, `\
+00008000    78           SEI
+00008001    d8           CLD
+00008002    a9 10        LDA #$10
+00008004    8d 00 20     STA $2000
+00008007    a2 ff        LDX #$ff
+00008009    9a           TXS
+0000800a    ad 02 20     LDA $2002
+0000800d    10 fb        BPL -5
+0000800f    ad xx xx     LDA $xxxx
+`);
+  t.end();
+});
+
+
 test('reassemble', (t) => {
   const text = `\
 00000000    78           SEI
